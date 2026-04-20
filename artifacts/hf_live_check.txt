@@ -1,0 +1,10 @@
+=== Hugging Face Live Deploy Check ===
+Date: Sun Apr  5 23:45:45 IST 2026
+Public URL: https://ayushman098-telco-rca.hf.space
+Dashboard URL: https://huggingface.co/spaces/ayushman098/telco-rca
+
+--- /health Response ---
+{"status":"ok","environment":"telco-rca","version":"1.0.0","tasks_available":["easy","medium","hard"]}
+
+--- /tasks Response ---
+{"tasks":[{"name":"easy","description":"EASY: A single power unit has failed in a small 5G network of ~20 nodes. Roughly 5–10 downstream alarms with NO noise. Your job: classify the alarm (e.g. 'Mains Failure') and suggest a standard repair. Identify and fix the root cause within 15 steps.","num_nodes":20,"max_steps":15,"failure_layers":["power_unit"],"noise_ratio":0.0,"num_regions":1},{"name":"medium","description":"MEDIUM: A core switch or power unit has failed in a 100-node 5G network. You will see ~10–50 simultaneous alarms with 20% noise (spurious alerts). Correlate alarms across a cluster to find the ONE true faulty node. Diagnose root cause within 30 steps while minimising false positives.","num_nodes":100,"max_steps":30,"failure_layers":["power_unit","core_switch"],"noise_ratio":0.2,"num_regions":3},{"name":"hard","description":"HARD: A cascading failure in a 500-node 5G Knowledge Graph. Any layer can fail. 40% noise alarms. Up to 300 alarm events. Navigate physical and logical dependencies across multiple regions to stop a systemic outage. Solve within 50 steps. Heavy penalties for false positives — every wrong restart sends a real crew to the wrong location.","num_nodes":500,"max_steps":50,"failure_layers":["power_unit","core_switch","radio_controller"],"noise_ratio":0.4,"num_regions":5}]}

@@ -1,0 +1,36 @@
+Telco-RCA Baseline Benchmark Report
+Server: http://127.0.0.1:7860
+Episodes per task: 2
+Tasks: easy, medium, hard, extreme
+
+Per-episode results
+task       ep  seed  score   mttr_s  steps  fp  success
+---------  --  ----  ------  ------  -----  --  -------
+easy        1    42  0.0850   19.26     14   2      yes
+easy        2    43  0.3030   17.38     13   1      yes
+medium      1  1042  0.9668   12.23      9   1      yes
+medium      2  1043  1.0000   10.86      8   0      yes
+hard        1  2042  1.0000   17.95     13   0      yes
+hard        2  2043  1.0000   17.32     13   0      yes
+extreme     1  3042  1.0000   23.59     17   0      yes
+extreme     2  3043  0.9961   28.79     22   0      yes
+
+Per-task summary
+task       n   mean_score  std_score  mean_mttr_s  std_mttr_s  success_rate
+---------  --  ----------  ---------  -----------  ----------  ------------
+easy        2      0.1940     0.1090        18.32        0.94           2/2
+medium      2      0.9834     0.0166        11.54        0.69           2/2
+hard        2      1.0000     0.0000        17.63        0.31           2/2
+extreme     2      0.9980     0.0020        26.19        2.60           2/2
+
+Overall
+  runs: 8
+  mean_score: 0.7939
+  std_score: 0.3508
+  mean_mttr_s: 18.42
+  std_mttr_s: 5.40
+  success_rate: 8/8
+
+Notes:
+  - MTTR is reported as elapsed_seconds from inference.py, matching the grader's speed input.
+  - Scores are the environment-grade values in the [0.0, 1.0] range.

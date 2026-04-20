@@ -1,0 +1,128 @@
+name: telco-rca
+version: "1.0.0"
+description: >
+  5G Network Root Cause Analysis environment. An alarm storm has hit the network —
+  hundreds of downstream nodes are screaming. One piece of equipment is the real culprit.
+  The agent must trace the cascade through a knowledge graph of physical and logical
+  dependencies, isolate the root cause, and fix it with minimum false positives and
+  maximum speed.
+
+author: "Team Codyy AR"
+license: MIT
+
+tasks:
+  - name: easy
+    description: >
+      Single power unit failure in a 20-node network. ~5–10 alarms, no noise.
+      Classify the alarm (e.g. 'Mains Failure') and suggest a standard repair.
+    max_steps: 15
+    difficulty: easy
+    num_nodes: 20
+    noise_ratio: 0.0
+
+  - name: medium
+    description: >
+      Core switch/power failure in 100-node network. Up to 50 alarms, 20% noise.
+      Correlate 10+ simultaneous alarms across a cluster to find the ONE true faulty node.
+    max_steps: 30
+    difficulty: medium
+    num_nodes: 100
+    noise_ratio: 0.2
+
+  - name: hard
+    description: >
+      Cascading failure in 500-node 5G Knowledge Graph. 300+ alarms, 40% noise.
+      Navigate physical and logical dependencies across 5 regions. All layers at risk.
+    max_steps: 50
+    difficulty: hard
+    num_nodes: 500
+    noise_ratio: 0.4
+
+  - name: extreme
+    description: >
+      Worst-case outage in a 1000-node 5G network with 60% noise. Agents must
+      traverse deep dependencies, filter heavy alarm clutter, and isolate the true
+      root cause within a wide multi-region topology.
+    max_steps: 75
+    difficulty: extreme
+    num_nodes: 1000
+    noise_ratio: 0.6
+
+action_space:
+  type: discrete_typed
+  actions:
+    - name: CHECK_LOGS
+      description: Read error logs for a specific node — returns status, layer, parent, alarm text
+    - name: CHECK_VOLTAGE
+      description: Measure voltage output of a node (power diagnostic) — low voltage = hardware fault
+    - name: TRACE_PATH
+      description: Show full path from node to tree root + direct children with status
+    - name: RESTART
+      description: Restart a node — fixes network if root cause; false positive penalty (-0.3) if not
+    - name: DIAGNOSE
+      description: Declare a node as root cause without restarting (safer but lower reward)
+
+observation_space:
+  type: structured
+  fields:
+    - name: active_alarms
+      type: "list[Alarm]"
+      description: "Active alarms (capped at 50 in observation; full count in total_alarm_count)"
+    - name: total_alarm_count
+      type: int
+    - name: steps_remaining
+      type: int
+    - name: false_positives_so_far
+      type: int
+    - name: checked_nodes
+      type: "list[str]"
+    - name: episode_done
+      type: bool
+    - name: task_description
+      type: str
+    - name: network_summary
+      type: dict
+      description: "Layer-by-layer and region-by-region alarm counts"
+    - name: simulation_time_s
+      type: float
+      description: "Deterministic simulation clock in seconds since reset"
+    - name: alarm_age_summary
+      type: dict
+      description: "Aggregate alarm age stats (average/oldest/newest/escalated count)"
+    - name: graph
+      type: dict
+      description: "Capped graph-native node and edge features for GNN-style agents and topology visualization"
+
+reward:
+  range: [-inf, ~2.0]
+  description: >
+    Reward = efficiency_multiplier + speed_bonus - false_positive_penalty.
+    Maximum achievable ~2.0 (instant correct fix, no false positives).
+    Each wrong RESTART costs -0.3 and adds to the false_positive_penalty in the final grade.
+    The aggregate false_positive_penalty is capped at 0.8 in both grading and terminal reward shaping.
+    Each step costs -0.01.
+
+grading:
+  formula: >
+    score = clamp(efficiency_mult + speed_bonus × 0.2 − fp_penalty, 0.001, 0.999)
+    efficiency_mult = 1 − (steps_taken / max_steps)
+    speed_bonus     = max(0, 1 − elapsed_seconds / 300)
+    fp_penalty      = false_positives × 0.15 (capped at 0.8)
+  metrics:
+    - F1-Score of Root Cause identification (precision, recall)
+    - MTTR (Mean Time to Recovery) as speed_bonus
+    - False Positive rate penalised at 0.15 per wrong restart
+
+endpoints:
+  reset: "POST /reset"
+  step:  "POST /step"
+  state: "GET /state"
+  trajectory: "GET /trajectory"
+  state_internal: "GET /state/internal"
+  tasks: "GET /tasks"
+  grade: "POST /grade"
+  health: "GET /health"
+
+docker:
+  port: 7860
+  base_image: python:3.11-slim

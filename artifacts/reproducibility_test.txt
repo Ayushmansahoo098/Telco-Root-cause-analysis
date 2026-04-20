@@ -1,0 +1,9 @@
+Run 1:
+  easy     root=PWR_000         steps=13  fps=0  done=True
+  medium   root=SW_03_03        steps=8  fps=0  done=True
+  hard     root=RC_03_01_00     steps=30  fps=0  done=False
+
+Run 2:
+  easy     root=PWR_000         steps=13  fps=0  done=True
+  medium   root=SW_03_03        steps=8  fps=0  done=True
+  hard     root=RC_03_01_00     steps=30  fps=0  done=False
