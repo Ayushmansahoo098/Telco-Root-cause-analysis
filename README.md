@@ -19,6 +19,11 @@ pinned: false
 [![React](https://img.shields.io/badge/Frontend-React-61DAFB?logo=react&logoColor=black)](https://reactjs.org/)
 [![Vite](https://img.shields.io/badge/Build-Vite-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Status](https://img.shields.io/badge/Status-Production--Ready-success)]()
+[![HF Space](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Space-blue)](https://ayushman098-telco-rca.hf.space)
+
+---
+
+### **[🚀 Live Demo on Hugging Face Spaces](https://ayushman098-telco-rca.hf.space)**
 
 ---
 
