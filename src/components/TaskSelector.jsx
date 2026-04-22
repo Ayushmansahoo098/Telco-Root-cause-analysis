@@ -48,7 +48,32 @@ export function TaskSelector({
               </h1>
             </div>
           </div>
-
+          
+          <div className="flex flex-wrap gap-2">
+            {taskCards.map((card) => (
+              <button
+                key={card.key}
+                type="button"
+                onClick={() => onTaskChange(card.key)}
+                className={`flex flex-col gap-1 rounded-[1.1rem] border px-4 py-2.5 text-left transition-all ${
+                  task === card.key
+                    ? "border-bronze bg-bronze/10 ring-1 ring-bronze/30"
+                    : "border-cream/10 bg-black/10 hover:border-cream/25 hover:bg-black/20"
+                }`}
+              >
+                <span className={`text-[0.62rem] font-bold uppercase tracking-[0.15em] ${
+                  task === card.key ? "text-bronze" : "text-cream/40"
+                }`}>
+                  Scenario
+                </span>
+                <span className={`text-xs font-bold ${
+                  task === card.key ? "text-cream" : "text-cream/65"
+                }`}>
+                  {card.title}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="flex flex-col gap-3 xl:items-end">

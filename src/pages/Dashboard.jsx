@@ -1,6 +1,7 @@
 import { lazy, Suspense, memo } from "react";
 
 import { TaskSelector } from "@/components/TaskSelector";
+import { NetworkAlertOverlay } from "@/components/NetworkAlertOverlay";
 
 // Memoized panels to prevent unnecessary re-renders when other state changes
 const AlarmPanel = memo(lazy(() =>
@@ -59,6 +60,7 @@ function PanelSkeleton({ title, minHeight = "min-h-[20rem]", lines = 3 }) {
   );
 }
 
+
 export function Dashboard({
   task,
   tasks,
@@ -106,6 +108,8 @@ export function Dashboard({
         onReturn={onReturnToLanding}
         onToggleNoise={() => setShowNoise((current) => !current)}
       />
+
+      <NetworkAlertOverlay observation={observation} />
 
       <div className="grid flex-1 min-h-0 gap-4 xl:grid-cols-[320px_minmax(0,1fr)_360px] xl:grid-rows-[minmax(0,1fr)_auto]">
         <div className="xl:row-span-2">
