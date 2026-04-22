@@ -9,9 +9,12 @@ import { AlertOctagon, Zap, ShieldAlert } from "lucide-react";
  */
 export function NetworkAlertOverlay({ observation }) {
   const activeAlarms = observation?.active_alarms || [];
+  const isDone = observation?.done === true;
   
   // Logic to determine if we are in a "Critical Alarm Storm" state
   const alertState = useMemo(() => {
+    if (isDone) return null;
+    
     const criticals = activeAlarms.filter(a => a.severity === "CRITICAL");
     const powerFailures = activeAlarms.filter(a => a.node_id.startsWith("PWR_"));
     

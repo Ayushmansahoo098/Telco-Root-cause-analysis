@@ -36,7 +36,7 @@ pinned: false
 
 ## ✨ Key Features
 - 💠 **Graphical Reasoning**: Interactive 4-layer network topology visualization.
-- ⚡ **Real-Time Telemetry**: Live WebSocket-driven alarm feeds and agent logs.
+- ⚡ **Real-Time Telemetry**: Live HTTP polling-driven alarm feeds and agent logs.
 - 🧠 **Explainable AI**: Visual evidence paths showing *why* a node is suspected.
 - 📊 **Dynamic Simulation**: 4 difficulty levels (Easy to Extreme) with up to 1000 nodes.
 - 📈 **Performance Analytics**: Integrated MTTR, Accuracy, and Efficiency tracking.
@@ -52,7 +52,7 @@ pinned: false
 ├── app/                  # Backend Logic (FastAPI Environment)
 ├── artifacts/            # System Logs & Generated Outputs
 ├── assets/               # 3D Infographics & UML Library
-├── server/               # WebSocket Gateway & API Handlers
+├── app/                  # FastAPI Backend & API Handlers
 ├── src/                  # React Frontend (Vite)
 ├── tests/                # Unit & Integration Test Suites
 ├── Dockerfile            # Containerization Configuration
@@ -75,7 +75,7 @@ pinned: false
 
 ![System Architecture](./assets/architecture.png)
 
-1. **Frontend Layer**: A React-based glassmorphic UI that handles graph visualization and live telemetry via WebSockets.
+1. **Frontend Layer**: A React-based glassmorphic UI that handles graph visualization and live telemetry via HTTP polling.
 2. **Service Layer**: An asynchronous FastAPI gateway that orchestrates simulation states and agent reasoning loops.
 3. **Causal Engine**: The core logic layer that models 5G dependencies and generates failure propagation patterns.
 
@@ -106,7 +106,7 @@ pinned: false
 ![Module Architecture](./assets/uml/module_structure_3d.png)
 
 1. **Frontend Architecture**: Contains modular UI Pages, custom Recharts/SVG components, and highly optimized Simulation Hooks.
-2. **Service Layer**: Manages authentication, RESTful routing, and persistent WebSocket connections for real-time updates.
+2. **Service Layer**: Manages authentication, RESTful routing, and fast endpoints for real-time polling updates.
 3. **Core Engine**: The scientific heart of the project, including the Scenario Engine, Topology State Manager, and Graders.
 
 ---

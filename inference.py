@@ -37,7 +37,7 @@ from openai import OpenAI
 
 # ── Config ────────────────────────────────────────────────────────────
 API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
-MODEL_NAME = os.getenv("MODEL_NAME", "claude-sonnet-4-20250514")
+MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o")
 HF_TOKEN = os.getenv("HF_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 INTERNAL_API_TOKEN = os.getenv("INTERNAL_API_TOKEN", "")
@@ -320,13 +320,16 @@ def log_step_line(step: int, action: str, reward: float, done: bool, error) -> N
     )
 
 
-def log_end(success: bool, steps: int, score: float, rewards: list[float]) -> None:
-    rewards_str = ",".join(f"{r:.2f}" for r in rewards)
-    print(
-        f"[END] success={_fmt_bool(success)} steps={steps} "
-        f"score={score:.4f} rewards={rewards_str}",
-        flush=True,
-    )
+def log_end(success: bool, steps: int, score: float, rewards: list[float], episode_result: dict = None) -> None:
+    if episode_result:
+        print(f"[END] {json.dumps({'results': [episode_result]})}", flush=True)
+    else:
+        rewards_str = ",".join(f"{r:.2f}" for r in rewards)
+        print(
+            f"[END] success={_fmt_bool(success)} steps={steps} "
+            f"score={score:.4f} rewards={rewards_str}",
+            flush=True,
+        )
 
 
 def run_episode(task: str) -> dict:
@@ -489,7 +492,7 @@ def run_episode(task: str) -> dict:
     }
 
     # Emit spec-required [END] line for this episode
-    log_end(success, step_num, score, rewards_list)
+    log_end(success, step_num, score, rewards_list, episode_result)
 
     return episode_result
 

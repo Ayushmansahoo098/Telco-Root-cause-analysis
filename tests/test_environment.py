@@ -642,3 +642,24 @@ class TestIntegration:
         assert len(obs.graph["nodes"]) <= 100
         assert obs.total_alarm_count >= 20
         assert len(obs.network_summary["regions"]) == TASK_CONFIGS["extreme"].num_regions
+
+    def test_repeated_false_positive_terminates(self):
+        """Taking too many wrong actions eventually exhausts the step limit."""
+        env = TelcoRCAEnvironment("easy")
+        env.reset()
+        root = env._state.root_cause_id
+        wrong = next(nid for nid in env._state.nodes if nid != root)
+        for _ in range(20):
+            res = env.step(AgentAction(action_type="RESTART", target_node_id=wrong))
+            if res.done:
+                break
+        assert res.done is True
+        assert res.info["result"] in ["FALSE_POSITIVE", "MAX_STEPS_REACHED"]
+
+    def test_environment_sanitizes_invalid_actions_gracefully(self):
+        """Testing that invalid node operations return a penalty without crashing the stack."""
+        env = TelcoRCAEnvironment("easy")
+        env.reset()
+        res = env.step(AgentAction(action_type="TRACE_PATH", target_node_id="INVALID_NODE_999"))
+        assert res.reward < 0
+        assert "Invalid node_id" in str(res.observation.task_description) or res.observation.steps_remaining <= 15
