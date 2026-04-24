@@ -226,62 +226,84 @@ What is your next action? Respond with ONLY a JSON object."""
 def _heuristic_fallback(obs: dict, history: list[dict]) -> dict:
     """
     Deterministic heuristic when LLM fails.
-    Strategy: extract parent IDs from alarm node IDs, walk up to power units.
+    Strategy: TRACE → CHECK_VOLTAGE parents → DIAGNOSE critical → fallback.
+    NEVER repeats an (action, node) pair.
     """
     alarms = obs.get("active_alarms", [])
     checked = set(obs.get("checked_nodes", []))
 
-    # Extract candidate parent nodes from alarm node IDs
+    # Build a set of all (action_type, target_node_id) we've already done
+    done_pairs = set()
+    for h in history:
+        done_pairs.add((h.get("action_type", ""), h.get("target_node_id", "")))
+
+    def _is_new(action_type, node_id):
+        return (action_type, node_id) not in done_pairs
+
+    # ── Phase 1: TRACE_PATH on the most severe alarming node (just once) ──
+    severity_order = {"CRITICAL": 4, "MAJOR": 3, "WARNING": 2, "MINOR": 1}
+    sorted_alarms = sorted(alarms, key=lambda a: severity_order.get(a.get("severity", ""), 0), reverse=True)
+
+    for a in sorted_alarms:
+        nid = a["node_id"]
+        if _is_new("TRACE_PATH", nid):
+            return {"action_type": "TRACE_PATH", "target_node_id": nid}
+
+    # ── Phase 2: CHECK_VOLTAGE on parent nodes (PWR first, then SW) ──
     parent_candidates = set()
     for a in alarms:
         nid = a["node_id"]
         if nid.startswith("TOWER_"):
-            # Parent is radio controller: TOWER_XX_XX_XX_YY → RC_XX_XX_XX
-            parts = nid[6:]  # strip "TOWER_"
+            parts = nid[6:]
             rc_parts = "_".join(parts.split("_")[:-1])
             parent_candidates.add(f"RC_{rc_parts}")
         elif nid.startswith("RC_"):
-            # Parent is core switch: RC_XX_XX_YY → SW_XX_XX
             parts = nid[3:]
             sw_parts = "_".join(parts.split("_")[:-1])
             parent_candidates.add(f"SW_{sw_parts}")
         elif nid.startswith("SW_"):
-            # Parent is power unit: SW_XX_YY → PWR_0XX
             parts = nid[3:]
             pwr_idx = int(parts.split("_")[0])
             parent_candidates.add(f"PWR_{pwr_idx:03d}")
+        elif nid.startswith("PWR_"):
+            parent_candidates.add(nid)
 
-    # Also add power units directly from alarms
+    # Also add direct PWR/SW from alarms
     for a in alarms:
-        if a["node_id"].startswith("PWR_"):
+        if a["node_id"].startswith("PWR_") or a["node_id"].startswith("SW_"):
             parent_candidates.add(a["node_id"])
 
-    # Check unchecked parent candidates first (voltage check)
-    unchecked_parents = parent_candidates - checked
-    if unchecked_parents:
-        # Prefer power units
-        pwr = [p for p in unchecked_parents if p.startswith("PWR_")]
-        if pwr:
-            return {"action_type": "CHECK_VOLTAGE", "target_node_id": sorted(pwr)[0]}
-        sw = [p for p in unchecked_parents if p.startswith("SW_")]
-        if sw:
-            return {"action_type": "CHECK_VOLTAGE", "target_node_id": sorted(sw)[0]}
-        return {"action_type": "CHECK_VOLTAGE", "target_node_id": sorted(unchecked_parents)[0]}
+    # Sort: PWR first, then SW, then RC
+    layer_priority = {"PWR": 0, "SW": 1, "RC": 2}
+    sorted_parents = sorted(parent_candidates, key=lambda p: (layer_priority.get(p.split("_")[0], 9), p))
 
-    # If we've checked everything, look at history for critical voltage readings
+    for p in sorted_parents:
+        if _is_new("CHECK_VOLTAGE", p):
+            return {"action_type": "CHECK_VOLTAGE", "target_node_id": p}
+
+    # ── Phase 3: DIAGNOSE any node we found with CRITICAL/FAILED status ──
+    # Parse history results for CRITICAL indicators
     for h in reversed(history):
         info = h.get("info", {})
-        if info.get("status") == "CRITICAL" and "node_id" in info:      # Note: only CHECK_VOLTAGE sets status="CRITICAL"; CHECK_LOGS returns "FAILED"/"DEGRADED" so this never triggers from log history
-            nid = info["node_id"]
-            # Already tried restarting this one?
-            if not any(
-                hh.get("target_node_id") == nid
-                and hh.get("action_type") in ("RESTART", "DIAGNOSE")
-                for hh in history
-            ):
-                return {"action_type": "DIAGNOSE", "target_node_id": nid}
+        result_str = str(info.get("status", "")) + " " + str(h.get("info", ""))
+        target = h.get("target_node_id", "")
+        if target and ("CRITICAL" in result_str or "FAILED" in result_str):
+            if _is_new("DIAGNOSE", target):
+                return {"action_type": "DIAGNOSE", "target_node_id": target}
 
-    # Last resort: diagnose first alarm
+    # ── Phase 4: CHECK_LOGS on unchecked alarm nodes ──
+    for a in sorted_alarms:
+        nid = a["node_id"]
+        if _is_new("CHECK_LOGS", nid):
+            return {"action_type": "CHECK_LOGS", "target_node_id": nid}
+
+    # ── Phase 5: Last resort — diagnose highest severity alarm ──
+    for a in sorted_alarms:
+        nid = a["node_id"]
+        if _is_new("DIAGNOSE", nid):
+            return {"action_type": "DIAGNOSE", "target_node_id": nid}
+
+    # Absolute fallback
     if alarms:
         return {"action_type": "DIAGNOSE", "target_node_id": alarms[0]["node_id"]}
 
