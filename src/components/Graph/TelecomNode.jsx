@@ -37,12 +37,14 @@ export const TelecomNode = memo(({ data }) => {
     data.isConfirmedRoot ? "confirmed pulse" : "",
     data.isTrajectoryPath ? "trajectory-path" : "",
     data.isTrajectoryHit ? "trajectory-hit" : "",
+    data.status_name === "FAILED" ? "shadow-[0_0_24px_rgba(180,92,100,0.85)] border-failure/60" : "",
+    data.status_name === "DEGRADED" ? "shadow-[0_0_18px_rgba(199,144,77,0.55)] border-suspect/50" : "",
   ]
     .filter(Boolean)
     .join(" ");
 
   return (
-    <div className={`${classes} group`}>
+    <div className={`${classes} group`} style={{ transition: "box-shadow 0.3s ease, border-color 0.3s ease" }}>
       <Handle type="target" position={Position.Left} style={{ opacity: 0, pointerEvents: "none" }} />
       <div className="relative flex items-start justify-between gap-3">
         <div className="rounded-2xl border border-black/10 bg-black/5 p-2 transition-transform duration-300 group-hover:scale-110">
