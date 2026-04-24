@@ -169,23 +169,38 @@ Recent actions and results:
 
 What is your next action? Respond with ONLY a JSON object."""
 
-    try:
-        resp = client.chat.completions.create(
-            model=MODEL_NAME,
-            max_tokens=300,
-            temperature=0.1,
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user",   "content": user_msg},
-            ],
-        )
-        raw = resp.choices[0].message.content.strip()
-        # Strip markdown fences if present
-        raw = re.sub(r"```(?:json)?|```", "", raw).strip()
-        action = json.loads(raw)
-    except Exception:
-        # Fallback: heuristic strategy
-        action = _heuristic_fallback(obs, history)
+    action = None
+    for attempt in range(3):
+        try:
+            resp = client.chat.completions.create(
+                model=MODEL_NAME,
+                max_tokens=300,
+                temperature=0.1,
+                messages=[
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user",   "content": user_msg},
+                ],
+            )
+            raw = resp.choices[0].message.content.strip()
+            
+            # Robust JSON extraction: capture from first { to last }
+            match = re.search(r"\{.*\}", raw, re.DOTALL)
+            if match:
+                raw = match.group(0)
+            else:
+                # Strip markdown fences if present as fallback
+                raw = re.sub(r"```(?:json)?|```", "", raw).strip()
+            
+            action = json.loads(raw)
+            break
+        except Exception as e:
+            print(f"⚠️ [LLM Exception Attempt {attempt+1}/3] {e}", file=sys.stderr)
+            if attempt < 2:
+                time.sleep(4)
+                continue
+            else:
+                print("🛑 [LLM FAILED] Falling back to 4-step heuristic strategy.", file=sys.stderr)
+                action = _heuristic_fallback(obs, history)
 
     return action
 
