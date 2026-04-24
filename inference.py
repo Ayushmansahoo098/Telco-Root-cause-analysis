@@ -36,7 +36,7 @@ import re
 from openai import OpenAI
 
 # ── Config ────────────────────────────────────────────────────────────
-API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
+API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
 MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o")
 HF_TOKEN = os.getenv("HF_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
@@ -103,25 +103,21 @@ HIGHEST-layer node that is actually broken. Downstream alarms are just symptoms.
   RESTART <node_id>       — Fix the network IF it's the root cause (+reward), else FALSE POSITIVE (-0.3)
   DIAGNOSE <node_id>      — Declare root cause without restarting (safer, lower max reward)
 
-## Strategy:
-1. Examine the alarms. Group them by their node prefixes to identify affected subtrees.
-2. From node IDs, infer the parent hierarchy:
-   - TOWER_01_02_03_00 is a child of RC_01_02_03
-   - RC_01_02_03 is a child of SW_01_02
-   - SW_01_02 is a child of PWR_001 (approximately PWR_0XX where XX = first digits)
-3. CHECK_VOLTAGE on the suspected root node — voltage < 30V confirms hardware fault.
-4. If a power unit's voltage is CRITICAL, that's almost certainly the root cause.
-5. Use TRACE_PATH to confirm parent relationships when unsure.
-6. Use DIAGNOSE when fairly confident, RESTART only when very certain.
-7. Be EFFICIENT — minimize wasted steps. Every false restart is heavily penalized.
+## CRITICAL RULES:
+1. NEVER repeat the same action on the same node. If you already checked voltage on a node, do NOT check it again.
+2. If CHECK_VOLTAGE returns CRITICAL (<30V), that node is very likely the root cause. Immediately DIAGNOSE or RESTART it.
+3. If a node's voltage is NOMINAL (48V), it is healthy — move on to other suspects.
+4. Use TRACE_PATH at least once early on to understand the dependency tree.
+5. After 3-4 checks, you MUST commit to a DIAGNOSE or RESTART action. Do not keep checking forever.
+6. Each step costs time. Be decisive.
 
-## Important — Alarm Noise (varies by difficulty: easy=0%, medium=20%, hard=40%, extreme=60%):
-Some alarms are noise injected to mislead you. Signs of noise alarms:
-- Alarm on a leaf node (TOWER_) when its parent (RC_) shows no fault
-- Alarm severity doesn't match the node's actual voltage/status readings
-- Node appears fine on CHECK_LOGS but has a MINOR alarm
-Focus on CRITICAL alarms on higher-layer nodes (PWR_, SW_) — these are almost never noise.
-Always verify with CHECK_VOLTAGE before RESTART/DIAGNOSE.
+## Strategy:
+1. Look at the alarms. Group by node prefix to find the affected subtree.
+2. Use TRACE_PATH on the most alarming leaf node to find its parent chain.
+3. CHECK_VOLTAGE on the highest-layer suspect (prefer PWR_ then SW_ nodes).
+4. If voltage is CRITICAL → immediately DIAGNOSE that node.
+5. If voltage is NOMINAL → that node is fine, check the next candidate.
+6. NEVER check the same node twice.
 
 ## Response Format:
 Respond with EXACTLY one JSON object, nothing else:
@@ -151,21 +147,43 @@ def llm_decide(obs: dict, history: list[dict]) -> dict:
         for region, info in regions_info.items()
     )
 
+    # Detect repeated actions to warn the LLM
+    action_counts = {}
+    for h in history:
+        key = f"{h.get('action_type', '')}({h.get('target_node_id', '')})"
+        action_counts[key] = action_counts.get(key, 0) + 1
+    repeated = [k for k, v in action_counts.items() if v >= 2]
+    repeated_warning = ""
+    if repeated:
+        repeated_warning = f"\n\n⚠️ WARNING: You have REPEATED these actions: {', '.join(repeated)}. DO NOT repeat them. Choose a DIFFERENT action or DIAGNOSE a CRITICAL node NOW."
+
+    # Find nodes with CRITICAL voltage from history
+    critical_nodes = []
+    for h in history:
+        info = h.get('info', {})
+        if info.get('status') == 'CRITICAL' or 'CRITICAL' in str(h.get('info', '')):
+            tid = h.get('target_node_id', '')
+            if tid:
+                critical_nodes.append(tid)
+    critical_hint = ""
+    if critical_nodes:
+        critical_hint = f"\n\n🔴 CRITICAL NODES FOUND: {', '.join(set(critical_nodes))}. You should DIAGNOSE one of these immediately!"
+
     user_msg = f"""Active alarms ({obs['total_alarm_count']} total, showing first {len(alarm_summary)}):
-{chr(10).join(alarm_summary) if alarm_summary else "  (none)"}
+{chr(10).join(alarm_summary) if alarm_summary else '  (none)'}
 
 Network Layer Summary:
-{layer_str or "  (unavailable)"}
+{layer_str or '  (unavailable)'}
 
 Region Summary:
-{region_str or "  (unavailable)"}
+{region_str or '  (unavailable)'}
 
 Steps remaining: {obs['steps_remaining']}
 False positives so far: {obs['false_positives_so_far']}
 Nodes already checked: {obs['checked_nodes']}
 
 Recent actions and results:
-{json.dumps(history[-5:], indent=2) if history else "  (none)"}
+{json.dumps(history[-5:], indent=2) if history else '  (none)'}{repeated_warning}{critical_hint}
 
 What is your next action? Respond with ONLY a JSON object."""
 
