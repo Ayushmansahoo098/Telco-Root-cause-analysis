@@ -39,6 +39,31 @@ export function GraphPanel({
     }
   }, [flow.nodes.length]);
 
+  const handleRenderGraph = useCallback(() => {
+    const pathNodeIds = new Set(
+      [
+        explainability?.primaryCandidate?.nodeId,
+        ...(runtimeState?.episode_done && runtimeState?.resolved_node_id ? [runtimeState.resolved_node_id] : []),
+        ...(explainability?.propagationPath ?? []),
+      ].filter(Boolean)
+    );
+
+    setExpandedCategoryIds((current) => {
+      const next = new Set(current);
+      flow.nodes.forEach((node) => {
+        if (pathNodeIds.has(node.id)) {
+          const region = node.data?.region ?? "default";
+          const layer = node.data?.layer_name ?? "unknown";
+          next.add(`region:${region}`);
+          next.add(`layer:${region}:${layer}`);
+        }
+      });
+      return next;
+    });
+
+    setGraphRequested(true);
+  }, [explainability, runtimeState, flow.nodes]);
+
   const toggleCategory = useCallback((categoryId) => {
     setExpandedCategoryIds((current) => {
       const next = new Set(current);
@@ -176,7 +201,7 @@ export function GraphPanel({
                 </p>
                 <button
                   type="button"
-                  onClick={() => setGraphRequested(true)}
+                  onClick={handleRenderGraph}
                   className="mt-5 inline-flex items-center justify-center rounded-full border border-bronze/40 bg-bronze/15 px-4 py-2 text-sm font-semibold text-bronze transition hover:bg-bronze/25"
                 >
                   Render graph

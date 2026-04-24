@@ -3,7 +3,7 @@ import { startTransition, useCallback, useEffect, useMemo, useRef, useState } fr
 import { chooseAgentAction, buildTranscriptStep, createAgentMemory, createTranscript } from "@/utils/agent";
 import { buildFlowElements } from "@/utils/graph";
 import { deriveExplainability } from "@/utils/explainability";
-import { getState, getTasks, getTrajectory, gradeSimulation, resetSimulation, stepSimulation } from "@/services/api";
+import { getState, getTasks, getTrajectory, gradeSimulation, resetSimulation, stepSimulation, stepAgentLLM } from "@/services/api";
 import { createStateSocket } from "@/services/socket";
 
 function buildTrajectory(state = {}) {
@@ -379,11 +379,43 @@ export function useSimulation() {
       return false;
     }
 
-    const nextAction = chooseAgentAction({
-      observation: snapshotRef.current.observation,
-      explainability: snapshotRef.current.explainability,
-      memory: snapshotRef.current.agentMemory,
-    });
+    let nextAction = null;
+    try {
+      // Map UI transcript steps to the history format expected by llm_decide
+      const history = snapshotRef.current.transcript.steps.map((step, idx) => {
+         // UI format: step.action is string like "CHECK_LOGS(PWR_000)"
+         // We extract the parts.
+         const match = step.action.match(/([A-Z_]+)\((.*)\)/);
+         return {
+           step: idx + 1,
+           action_type: match ? match[1] : step.action,
+           target_node_id: match ? match[2] : "",
+           info: { status: step.result }
+         };
+      });
+
+      const llmResponse = await stepAgentLLM({
+        task: snapshotRef.current.task,
+        history: history
+      });
+
+      if (llmResponse && llmResponse.action_type && llmResponse.target_node_id) {
+         nextAction = {
+           actionType: llmResponse.action_type,
+           targetNodeId: llmResponse.target_node_id
+         };
+      }
+    } catch (e) {
+      console.error("LLM Agent failed, falling back to heuristic:", e);
+    }
+
+    if (!nextAction) {
+      nextAction = chooseAgentAction({
+        observation: snapshotRef.current.observation,
+        explainability: snapshotRef.current.explainability,
+        memory: snapshotRef.current.agentMemory,
+      });
+    }
 
     if (!nextAction) {
       return false;

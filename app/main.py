@@ -164,8 +164,12 @@ class ResetRequest(BaseModel):
     seed: int | None = None
 
 class StepRequest(BaseModel):
-    task: str = "easy"
+    task: str
     action: AgentAction
+
+class AgentStepRequest(BaseModel):
+    task: str
+    history: list[dict]
 
 class GradeRequest(BaseModel):
     task: str
@@ -247,6 +251,25 @@ def step(req: StepRequest):
     except RuntimeError as e:
         raise HTTPException(400, str(e))
     return result.model_dump()
+
+
+@app.post("/agent/step")
+def agent_step(req: AgentStepRequest):
+    if req.task not in TASK_CONFIGS:
+        raise HTTPException(400, f"Unknown task '{req.task}'.")
+    env = _get_env(req.task)
+    if env._state is None:
+        raise HTTPException(400, "Environment not initialized.")
+    obs = env._build_observation().model_dump()
+    try:
+        import sys
+        import os
+        sys.path.append(os.getcwd())
+        from inference import llm_decide
+        action = llm_decide(obs, req.history)
+        return action
+    except Exception as e:
+        raise HTTPException(500, f"Failed to run LLM agent: {str(e)}")
 
 
 @app.get("/state")

@@ -14,7 +14,7 @@ const NODE_SIZES = {
   },
   leaf: {
     width: 224,
-    height: 168,
+    height: 240,
   },
 };
 

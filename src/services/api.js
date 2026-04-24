@@ -17,6 +17,11 @@ export async function stepSimulation(payload) {
   return data;
 }
 
+export async function stepAgentLLM(payload) {
+  const { data } = await apiClient.post("/agent/step", payload);
+  return data;
+}
+
 export async function getState(task) {
   const { data } = await apiClient.get("/state", {
     params: { task },
