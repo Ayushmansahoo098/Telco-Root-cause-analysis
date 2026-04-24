@@ -133,15 +133,15 @@ export function GraphPanel({
 
         <div className="flex flex-wrap gap-2">
           {[
-            { label: "Healthy", color: "bg-healthy" },
-            { label: "Suspected", color: "bg-suspect" },
-            { label: "Failed", color: "bg-failure" },
+            { label: "Healthy", color: "bg-healthy", outerClass: "border-cream/10 bg-black/10" },
+            { label: "Suspected", color: "bg-suspect", outerClass: "border-suspect/40 bg-suspect/10 shadow-[0_0_12px_rgba(199,144,77,0.35)]" },
+            { label: "Failed", color: "bg-failure", outerClass: "border-failure/40 bg-failure/10 shadow-[0_0_12px_rgba(180,92,100,0.35)]" },
           ].map((item) => (
             <span
               key={item.label}
-              className="inline-flex items-center gap-2 rounded-full border border-cream/10 bg-black/10 px-3 py-1 text-xs font-semibold text-cream/70"
+              className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold text-cream/70 ${item.outerClass}`}
             >
-              <span className={`h-2 w-2 rounded-full ${item.color}`} />
+              <span className={`h-2 w-2 rounded-full ${item.color} ${item.label !== "Healthy" ? "shadow-[0_0_8px_currentColor]" : ""}`} />
               {item.label}
             </span>
           ))}
