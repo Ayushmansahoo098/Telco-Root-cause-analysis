@@ -174,7 +174,7 @@ What is your next action? Respond with ONLY a JSON object."""
         try:
             resp = client.chat.completions.create(
                 model=MODEL_NAME,
-                max_tokens=300,
+                max_tokens=150,
                 temperature=0.1,
                 messages=[
                     {"role": "system", "content": SYSTEM_PROMPT},
@@ -196,7 +196,7 @@ What is your next action? Respond with ONLY a JSON object."""
         except Exception as e:
             print(f"⚠️ [LLM Exception Attempt {attempt+1}/3] {e}", file=sys.stderr)
             if attempt < 2:
-                time.sleep(4)
+                time.sleep(2)
                 continue
             else:
                 print("🛑 [LLM FAILED] Falling back to 4-step heuristic strategy.", file=sys.stderr)

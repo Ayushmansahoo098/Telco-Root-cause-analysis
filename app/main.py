@@ -13,6 +13,7 @@ Endpoints:
 """
 
 from pathlib import Path
+import asyncio
 
 from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -21,6 +22,7 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from pydantic import BaseModel
 from typing import Optional
 import os
+import sys
 import time
 
 from .environment import TelcoRCAEnvironment
@@ -253,8 +255,12 @@ def step(req: StepRequest):
     return result.model_dump()
 
 
+# Ensure inference module is importable (do this once, not per-request)
+if os.getcwd() not in sys.path:
+    sys.path.insert(0, os.getcwd())
+
 @app.post("/agent/step")
-def agent_step(req: AgentStepRequest):
+async def agent_step(req: AgentStepRequest):
     if req.task not in TASK_CONFIGS:
         raise HTTPException(400, f"Unknown task '{req.task}'.")
     env = _get_env(req.task)
@@ -262,9 +268,6 @@ def agent_step(req: AgentStepRequest):
         raise HTTPException(400, "Environment not initialized.")
     obs = env._build_observation().model_dump()
     try:
-        import sys
-        import os
-        sys.path.append(os.getcwd())
         from inference import llm_decide
         
         print("\n" + "="*50)
@@ -272,7 +275,8 @@ def agent_step(req: AgentStepRequest):
         print(f"📊 Current Alarms: {len(obs['active_alarms'])} | Graph Nodes: {obs['network_summary']['total_nodes']}")
         print(f"⏳ Waiting for model {os.getenv('MODEL_NAME', 'meta-llama/Meta-Llama-3-8B-Instruct')} to decide...")
         
-        action = llm_decide(obs, req.history)
+        # Run the blocking LLM call in a thread so the server stays responsive
+        action = await asyncio.to_thread(llm_decide, obs, req.history)
         
         print(f"⚡ [ACTION DECIDED] >> {action.get('action_type')} on target: {action.get('target_node_id')}")
         print("="*50 + "\n")
