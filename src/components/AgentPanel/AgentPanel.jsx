@@ -27,14 +27,20 @@ export function AgentPanel({ transcript, latestAction, latestInfo, error, isRunn
           className="surface-card"
         >
           <div className="flex items-center gap-3">
-            <Radar className="h-5 w-5 text-bronze" />
+            <Radar className={`h-5 w-5 text-bronze ${isRunningAgent ? 'animate-spin' : ''}`} />
             <div>
               <p className="soft-label">Current action</p>
-              <p className="break-anywhere mt-1 font-display text-[1.55rem] font-semibold leading-none text-cream">
-                {latestAction
-                  ? formatActionCall(latestAction.actionType, latestAction.targetNodeId)
-                  : "Awaiting operator or agent step"}
-              </p>
+              {isRunningAgent ? (
+                <p className="break-anywhere mt-1 font-display text-[1.55rem] font-semibold leading-none text-suspect animate-pulse">
+                  🤖 LLM is analyzing graph...
+                </p>
+              ) : (
+                <p className="break-anywhere mt-1 font-display text-[1.55rem] font-semibold leading-none text-cream">
+                  {latestAction
+                    ? formatActionCall(latestAction.actionType, latestAction.targetNodeId)
+                    : "Awaiting operator or agent step"}
+                </p>
+              )}
             </div>
           </div>
         </motion.div>

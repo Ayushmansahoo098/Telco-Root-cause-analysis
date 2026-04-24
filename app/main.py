@@ -266,7 +266,17 @@ def agent_step(req: AgentStepRequest):
         import os
         sys.path.append(os.getcwd())
         from inference import llm_decide
+        
+        print("\n" + "="*50)
+        print(f"🧠 [LLM REASONING START] Task: {req.task.upper()}")
+        print(f"📊 Current Alarms: {len(obs['active_alarms'])} | Graph Nodes: {obs['network_summary']['total_nodes']}")
+        print(f"⏳ Waiting for model {os.getenv('MODEL_NAME', 'meta-llama/Meta-Llama-3-8B-Instruct')} to decide...")
+        
         action = llm_decide(obs, req.history)
+        
+        print(f"⚡ [ACTION DECIDED] >> {action.get('action_type')} on target: {action.get('target_node_id')}")
+        print("="*50 + "\n")
+        
         return action
     except Exception as e:
         raise HTTPException(500, f"Failed to run LLM agent: {str(e)}")
