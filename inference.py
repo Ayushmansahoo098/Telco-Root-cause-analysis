@@ -187,6 +187,7 @@ Recent actions and results:
 
 What is your next action? Respond with ONLY a JSON object."""
 
+    print(f"--- LLM INPUT ---\n{user_msg}\n--- END LLM INPUT ---", file=sys.stderr)
     action = None
     for attempt in range(3):
         try:
