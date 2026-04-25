@@ -233,9 +233,10 @@ def _heuristic_fallback(obs: dict, history: list[dict]) -> dict:
     checked = set(obs.get("checked_nodes", []))
 
     # Build a set of all (action_type, target_node_id) we've already done
+    # Normalize action_type to uppercase since frontend sends lowercase (trace_path vs TRACE_PATH)
     done_pairs = set()
     for h in history:
-        done_pairs.add((h.get("action_type", ""), h.get("target_node_id", "")))
+        done_pairs.add((h.get("action_type", "").upper(), h.get("target_node_id", "")))
 
     def _is_new(action_type, node_id):
         return (action_type, node_id) not in done_pairs
