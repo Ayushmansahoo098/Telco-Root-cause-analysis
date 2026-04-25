@@ -37,7 +37,8 @@ pinned: false
 ## ✨ Key Features
 - 💠 **Graphical Reasoning**: Interactive 4-layer network topology visualization.
 - ⚡ **Real-Time Telemetry**: Live HTTP polling-driven alarm feeds and agent logs.
-- 🧠 **Explainable AI**: Visual evidence paths showing *why* a node is suspected.
+- 🧠 **LLM-Powered Analysis**: Powered by **Llama 3.3 70B** on Groq for sub-second causal reasoning.
+- 📉 **Causal Shuffling**: Randomized alarm propagation ensures unique investigative paths for every run.
 - 📊 **Dynamic Simulation**: 4 difficulty levels (Easy to Extreme) with up to 1000 nodes.
 - 📈 **Performance Analytics**: Integrated MTTR, Accuracy, and Efficiency tracking.
 
@@ -139,44 +140,37 @@ graph LR
 
 ---
 
-## ⚙️ Installation & Setup
+## ⚙️ Configuration & Secrets
 
-### Prerequisites
-- Node.js 18+
-- Python 3.10+
+To enable the AI Agent, you must configure the following environment variables (Secrets):
 
-### Setup Commands
-```bash
-# Clone the repository
-git clone https://github.com/your-username/telco-rca.git
-cd telco-rca
-
-# Install Backend Dependencies
-pip install -r requirements.txt
-
-# Install Frontend Dependencies
-npm install
-```
+- `HF_TOKEN`: Your **Groq API Key** (for high-speed Llama inference).
+- `API_BASE_URL`: `https://api.groq.com/openai/v1`
+- `MODEL_NAME`: `llama-3.3-70b-versatile`
 
 ---
 
 ## ▶️ Running the Application
 
-To start the full development environment (Backend + Frontend), run:
+For the best experience, run the combined backend and frontend server using a single command:
 
-### 1. Start the Backend (FastAPI)
 ```bash
 # From the project root
-python app/main.py
+HF_TOKEN="your_groq_key" API_BASE_URL="https://api.groq.com/openai/v1" MODEL_NAME="llama-3.3-70b-versatile" uvicorn app.main:app --host 0.0.0.0 --port 7860
 ```
 
-### 2. Start the Frontend (Vite)
-```bash
-# In a new terminal tab
-npm run dev
-```
+The application will be available at **http://localhost:7860**.
 
-The application will be available at **http://localhost:5173**.
+---
+
+## 🧠 Intelligent Reasoning Logic
+
+The AI Agent follows a **Functional Cognitive Loop** to isolate faults:
+
+1.  **Causal Shuffling**: Alarms are randomized in the prompt to force the AI to scan and investigate rather than relying on order bias.
+2.  **Anti-Loop Safeguards**: A history tracking system prevents the agent from repeating the same investigation step twice.
+3.  **Heuristic Fallback**: A multi-phase strategy (Trace → Check → Diagnose) ensures the agent makes progress even under heavy network noise.
+4.  **Voltage Forensics**: Suspected root nodes are verified through simulated physical voltage/temperature checks.
 
 ---
 
