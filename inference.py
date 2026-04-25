@@ -127,8 +127,11 @@ Respond with EXACTLY one JSON object, nothing else:
 
 def llm_decide(obs: dict, history: list[dict]) -> dict:
     """Ask the LLM what to do next. Returns an action dict."""
+    all_alarms = list(obs.get("active_alarms", []))
+    random.shuffle(all_alarms)
+    
     alarm_summary = []
-    for a in obs.get("active_alarms", [])[:30]:  # show more context
+    for a in all_alarms[:30]:  # show more context
         alarm_summary.append(
             f"  [{a['severity']}] {a['node_id']} ({a['layer']}): {a['message']}"
         )
@@ -194,7 +197,7 @@ What is your next action? Respond with ONLY a JSON object."""
             resp = client.chat.completions.create(
                 model=MODEL_NAME,
                 max_tokens=150,
-                temperature=0.1,
+                temperature=0.4,
                 messages=[
                     {"role": "system", "content": SYSTEM_PROMPT},
                     {"role": "user",   "content": user_msg},
