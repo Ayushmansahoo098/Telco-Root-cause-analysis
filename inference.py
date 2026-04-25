@@ -33,6 +33,7 @@ import os
 import sys
 import time
 import re
+import random
 from openai import OpenAI
 
 # ── Config ────────────────────────────────────────────────────────────
