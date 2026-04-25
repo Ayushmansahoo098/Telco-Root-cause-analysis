@@ -173,6 +173,8 @@ def llm_decide(obs: dict, history: list[dict]) -> dict:
     if critical_nodes:
         critical_hint = f"\n\n🔴 CRITICAL NODES FOUND: {', '.join(set(critical_nodes))}. You should DIAGNOSE one of these immediately!"
 
+    checked_summary = f"Summary of all nodes checked so far: {', '.join(obs['checked_nodes']) if obs['checked_nodes'] else 'None'}"
+
     user_msg = f"""Active alarms ({obs['total_alarm_count']} total, showing first {len(alarm_summary)}):
 {chr(10).join(alarm_summary) if alarm_summary else '  (none)'}
 
