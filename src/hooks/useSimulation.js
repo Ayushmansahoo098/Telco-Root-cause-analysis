@@ -382,12 +382,11 @@ export function useSimulation() {
     let nextAction = null;
     try {
       const history = (snapshotRef.current.transcript?.steps || []).map((step, idx) => {
-         const match = step.action.match(/([a-zA-Z_]+)\(id=(.*)\)/) || step.action.match(/([A-Z_]+)\((.*)\)/);
          return {
            step: idx + 1,
-           action_type: match ? match[1] : step.action,
-           target_node_id: match ? match[2] : "",
-           info: { status: step.result || "UNKNOWN" }
+           action_type: step.rawActionType || step.action,
+           target_node_id: step.rawTargetNodeId || "",
+           info: step.rawInfo || { status: step.result || "UNKNOWN" }
          };
       });
 

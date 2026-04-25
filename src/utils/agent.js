@@ -93,6 +93,9 @@ export function buildTranscriptStep(actionType, targetNodeId, info) {
   return {
     action: formatActionCall(actionType, targetNodeId),
     result: formatActionResult(actionType, info),
+    rawActionType: actionType,
+    rawTargetNodeId: targetNodeId,
+    rawInfo: info,
   };
 }
 
