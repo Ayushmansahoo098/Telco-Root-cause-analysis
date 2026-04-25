@@ -182,8 +182,8 @@ Steps remaining: {obs['steps_remaining']}
 False positives so far: {obs['false_positives_so_far']}
 Nodes already checked: {obs['checked_nodes']}
 
-Recent actions and results:
-{json.dumps(history[-5:], indent=2) if history else '  (none)'}{repeated_warning}{critical_hint}
+{checked_summary}
+{repeated_warning}{critical_hint}
 
 What is your next action? Respond with ONLY a JSON object."""
 
