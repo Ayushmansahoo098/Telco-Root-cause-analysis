@@ -130,8 +130,9 @@ export function useSimulation() {
       selectedNodeId,
       agentMemory,
       showNoise,
+      transcript,
     };
-  }, [task, observation, runtimeState, explainability, trajectory, selectedNodeId, agentMemory, showNoise]);
+  }, [task, observation, runtimeState, explainability, trajectory, selectedNodeId, agentMemory, showNoise, transcript]);
 
   const fetchGrade = useCallback(async (nextTask, nextState) => {
     try {

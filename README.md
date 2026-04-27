@@ -76,7 +76,7 @@ pinned: false
 
 ![System Architecture](./assets/architecture.png)
 
-1. **Frontend Layer**: A React-based glassmorphic UI that handles graph visualization and live telemetry via HTTP polling.
+1. **Frontend Layer**: A React-based glassmorphic UI that handles graph visualization and live telemetry via high-performance HTTP polling.
 2. **Service Layer**: An asynchronous FastAPI gateway that orchestrates simulation states and agent reasoning loops.
 3. **Causal Engine**: The core logic layer that models 5G dependencies and generates failure propagation patterns.
 
@@ -115,7 +115,7 @@ pinned: false
 ## 🚀 Deployment Diagram
 ```mermaid
 graph LR
-    Client((User Browser)) -- HTTPS/WSS --> Server[[FastAPI Server]]
+    Client((User Browser)) -- HTTPS/JSON --> Server[[FastAPI Server]]
     Server -- RAM/Disk --> DB[(In-Memory State)]
 ```
 
@@ -155,8 +155,8 @@ To enable the AI Agent, you must configure the following environment variables (
 For the best experience, run the combined backend and frontend server using a single command:
 
 ```bash
-# From the project root
-HF_TOKEN="your_groq_key" API_BASE_URL="https://api.groq.com/openai/v1" MODEL_NAME="llama-3.3-70b-versatile" uvicorn app.main:app --host 0.0.0.0 --port 7860
+# From the project root (Configuration is automatically loaded from .env)
+uvicorn app.main:app --host 0.0.0.0 --port 7860
 ```
 
 The application will be available at **http://localhost:7860**.

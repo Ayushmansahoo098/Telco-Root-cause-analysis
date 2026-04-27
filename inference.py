@@ -35,6 +35,10 @@ import time
 import re
 import random
 from openai import OpenAI
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # ── Config ────────────────────────────────────────────────────────────
 API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
@@ -240,13 +244,18 @@ def _heuristic_fallback(obs: dict, history: list[dict]) -> dict:
     checked = set(obs.get("checked_nodes", []))
 
     # Build a set of all (action_type, target_node_id) we've already done
-    # Normalize action_type to uppercase since frontend sends lowercase (trace_path vs TRACE_PATH)
     done_pairs = set()
     for h in history:
-        done_pairs.add((h.get("action_type", "").upper(), h.get("target_node_id", "")))
+        atype = str(h.get("action_type", "")).upper()
+        # Strip common formatting if the frontend sent the 'action' string instead of 'rawActionType'
+        if "(" in atype:
+            atype = atype.split("(")[0]
+        
+        target = str(h.get("target_node_id", "")).strip()
+        done_pairs.add((atype, target))
 
     def _is_new(action_type, node_id):
-        return (action_type, node_id) not in done_pairs
+        return (action_type.upper(), str(node_id).strip()) not in done_pairs
 
     # ── Phase 1: TRACE_PATH on the most severe alarming node (just once) ──
     severity_order = {"CRITICAL": 4, "MAJOR": 3, "WARNING": 2, "MINOR": 1}

@@ -24,6 +24,10 @@ from typing import Optional
 import os
 import sys
 import time
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 from .environment import TelcoRCAEnvironment
 from .models import AgentAction, TASK_CONFIGS
