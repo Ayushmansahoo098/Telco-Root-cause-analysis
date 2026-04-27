@@ -35,3 +35,9 @@ env/
 # IDEs
 .vscode/
 .idea/
+
+# Environment
+.env
+
+# Build
+telco_rca.egg-info/
